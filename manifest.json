@@ -1,0 +1,20 @@
+{
+  "builds": [
+    {
+      "name": "aws_ubuntu_node",
+      "builder_type": "amazon-ebs",
+      "build_time": 1748827424,
+      "files": null,
+      "artifact_id": "us-east-1:ami-07c689401f4510aef",
+      "packer_run_uuid": "30316f62-9b12-d107-cbfb-002d02d9c101",
+      "custom_data": {
+        "instance_type": "t2.micro",
+        "key_name": "MiKeyPair",
+        "region": "us-east-1",
+        "security_group_id": "sg-0f9304a7f699339f9",
+        "subnet_id": "subnet-0ffc4dbdd1d6ec182"
+      }
+    }
+  ],
+  "last_run_uuid": "30316f62-9b12-d107-cbfb-002d02d9c101"
+}

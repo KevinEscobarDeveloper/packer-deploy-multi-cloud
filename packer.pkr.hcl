@@ -56,38 +56,53 @@ source "googlecompute" "gcp_ubuntu_node" {
 ################################
 # 4. Build AWS (+ auto-deploy)
 ################################
+
 build {
   name    = "build_aws_and_launch"
   sources = ["source.amazon-ebs.aws_ubuntu_node"]
 
   provisioner "shell" {
-    script           = "install.sh"
+    script           = "install-aws.sh"
     environment_vars = ["NODE_VERSION=${var.node_version}"]
   }
 
+  # First, save the AMI information to a manifest file
+  post-processor "manifest" {
+    output = "manifest.json"
+    strip_path = true
+    custom_data = {
+      region = "${var.aws_region}"
+      instance_type = "${var.aws_instance_type}"
+      key_name = "${var.keypair_aws}"
+      security_group_id = "${var.sg_aws}"
+      subnet_id = "${var.subnet_aws}"
+    }
+  }
+
+  # Then, use the manifest to launch an EC2 instance
   post-processor "shell-local" {
-  inline = [
-    # Aviso
-    "echo '→ Lanzando EC2 con la AMI recién creada…'",
+    inline = [
+      "echo '→ Lanzando EC2 con la AMI recién creada…'",
+      "AMI_ID=$(jq -r '.builds[-1].artifact_id' manifest.json | cut -d':' -f2)",
+      "aws ec2 run-instances \\",
+      "  --profile packer \\",
+      "  --region ${var.aws_region} \\",
+      "  --image-id $AMI_ID \\",
+      "  --instance-type ${var.aws_instance_type} \\",
+      "  --count 1 \\",
+      "  --key-name ${var.keypair_aws} \\",
+      "  --security-group-ids ${var.sg_aws} \\",
+      "  --subnet-id ${var.subnet_aws} \\",
+      "  --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=PackerDemo}]' \\",
+      "  --associate-public-ip-address"
+    ]
+  }
 
-    # ArtifactId completo  →  us-east-1:ami-xxxxxxxxxxxxxxxxx
-    "AMI_ID=\"{{ .ArtifactId }}\"",
-
-    # Sólo la parte ami-xxxxxxxxxxxxxxxxx
-    "AMI_ID=$${AMI_ID##*:}",
-
-    # Comando AWS en **una sola cadena**
-    "aws ec2 run-instances --profile packer --region ${var.aws_region} --image-id $AMI_ID --instance-type ${var.aws_instance_type} --count 1 --key-name ${var.keypair_aws} --security-group-ids ${var.sg_aws} --subnet-id ${var.subnet_aws} --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=PackerDemo}]' --associate-public-ip-address"
-  ]
 }
-
-}
-
-
 
 
 ################################
-# 5. Build GCP (+ auto-deploy)  (opcional)
+# 5. Build GCP (+ auto-deploy)
 ################################
 build {
   name    = "build_gcp_and_launch"

@@ -1,5 +1,5 @@
 variables.pkr.hcl
 aws/
 .vscode/
-miKeyPair.pem
+MiKeyPair.pem
 sa-packer.json

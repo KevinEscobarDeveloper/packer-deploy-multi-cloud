@@ -1,0 +1,5 @@
+variables.pkr.hcl
+aws/
+.vscode/
+miKeyPair.pem
+sa-packer.json
